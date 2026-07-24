@@ -2,34 +2,63 @@ import type React from 'react';
 import remarkDirective from 'remark-directive';
 
 import './src/styles/section-include.css';
+import './src/styles/color-palette.css';
+
+import {
+  activateEditorColorPalette,
+  deactivateEditorColorPalette,
+} from './src/editorColorPalette';
 
 import {
   activateEditorToolbarTop,
   deactivateEditorToolbarTop,
 } from './src/editorToolbarTop';
-import { sectionDirectivePlugin } from './src/sectionDirective';
-import { withSectionInclude } from './src/SectionInclude';
 
-const PLUGIN_NAME = 'growi-plugin-section-include';
+import {
+  colorDirectivePlugin,
+} from './src/colorDirective';
+
+import {
+  sectionDirectivePlugin,
+} from './src/sectionDirective';
+
+import {
+  withSectionInclude,
+} from './src/SectionInclude';
+
+import {
+  withTextColor,
+} from './src/withTextColor';
+
+const PLUGIN_NAME =
+  'growi-plugin-section-include';
 
 type RendererOptions = {
-  components: Record<string, React.ComponentType<any>>;
+  components: Record<
+    string,
+    React.ComponentType<any>
+  >;
   remarkPlugins: unknown[];
 };
 
-type OptionsGenerator = (...args: any[]) => RendererOptions;
+type OptionsGenerator =
+  (...args: any[]) => RendererOptions;
 
 declare const growiFacade: {
   markdownRenderer?: {
     optionsGenerators: {
-      generateViewOptions: OptionsGenerator;
-      customGenerateViewOptions?: OptionsGenerator;
+      generateViewOptions:
+        OptionsGenerator;
+      customGenerateViewOptions?:
+        OptionsGenerator;
     };
   };
 };
 
-let previousViewGenerator: OptionsGenerator | undefined;
-let sectionIncludeActivated = false;
+let previousViewGenerator:
+  OptionsGenerator | undefined;
+
+let viewPluginActivated = false;
 
 const enhanceViewOptions = (
   options: RendererOptions,
@@ -39,17 +68,37 @@ const enhanceViewOptions = (
   ];
 
   /*
-   * ::section[...] をMarkdownディレクティブとして解析する。
+   * ::section[...] と
+   * :color[...] を解析可能にする。
    */
-  if (!remarkPlugins.includes(remarkDirective)) {
-    remarkPlugins.push(remarkDirective);
+  if (
+    !remarkPlugins.includes(
+      remarkDirective,
+    )
+  ) {
+    remarkPlugins.push(
+      remarkDirective,
+    );
   }
 
-  /*
-   * sectionディレクティブを専用のリンクノードへ変換する。
-   */
-  if (!remarkPlugins.includes(sectionDirectivePlugin)) {
-    remarkPlugins.push(sectionDirectivePlugin);
+  if (
+    !remarkPlugins.includes(
+      sectionDirectivePlugin,
+    )
+  ) {
+    remarkPlugins.push(
+      sectionDirectivePlugin,
+    );
+  }
+
+  if (
+    !remarkPlugins.includes(
+      colorDirectivePlugin,
+    )
+  ) {
+    remarkPlugins.push(
+      colorDirectivePlugin,
+    );
   }
 
   const components = {
@@ -58,13 +107,64 @@ const enhanceViewOptions = (
 
   const Anchor = components.a;
 
-  if (
-    Anchor != null
-    && (Anchor as any).__sectionIncludeWrapped !== true
-  ) {
-    const WrappedAnchor = withSectionInclude(Anchor);
+  if (Anchor != null) {
+    let WrappedAnchor = Anchor;
 
-    (WrappedAnchor as any).__sectionIncludeWrapped = true;
+    /*
+     * sectionリンク処理を追加する。
+     */
+    if (
+      (WrappedAnchor as any)
+        .__sectionIncludeWrapped
+      !== true
+    ) {
+      const SectionWrappedAnchor =
+        withSectionInclude(
+          WrappedAnchor,
+        );
+
+      (
+        SectionWrappedAnchor as any
+      ).__sectionIncludeWrapped = true;
+
+      WrappedAnchor =
+        SectionWrappedAnchor;
+    }
+
+    /*
+     * growi-color:リンクを
+     * 色付きspanへ変換する。
+     */
+    if (
+      (WrappedAnchor as any)
+        .__textColorWrapped
+      !== true
+    ) {
+      const ColorWrappedAnchor =
+        withTextColor(
+          WrappedAnchor,
+        );
+
+      /*
+       * 外側を色ラッパーで包んでも、
+       * sectionラッパー済みの印を維持する。
+       */
+      (
+        ColorWrappedAnchor as any
+      ).__sectionIncludeWrapped =
+        (
+          WrappedAnchor as any
+        ).__sectionIncludeWrapped
+        === true;
+
+      (
+        ColorWrappedAnchor as any
+      ).__textColorWrapped = true;
+
+      WrappedAnchor =
+        ColorWrappedAnchor;
+    }
+
     components.a = WrappedAnchor;
   }
 
@@ -77,14 +177,15 @@ const enhanceViewOptions = (
 
 const activate = (): void => {
   /*
-   * 編集ツールバーを上部へ表示する処理を有効化。
+   * 編集画面の機能。
    */
   activateEditorToolbarTop();
+  activateEditorColorPalette();
 
   /*
-   * 二重登録を防止する。
+   * View拡張の二重登録を防ぐ。
    */
-  if (sectionIncludeActivated) {
+  if (viewPluginActivated) {
     return;
   }
 
@@ -99,54 +200,71 @@ const activate = (): void => {
     growiFacade.markdownRenderer;
 
   /*
-   * View画面だけ拡張する。
-   * Preview/Edit側には登録しない。
+   * View画面だけを拡張する。
+   * Preview/EditのMarkdownレンダラーには
+   * 登録しない。
    */
   previousViewGenerator =
-    optionsGenerators.customGenerateViewOptions;
+    optionsGenerators
+      .customGenerateViewOptions;
 
-  optionsGenerators.customGenerateViewOptions = (
-    ...args: any[]
-  ): RendererOptions => {
-    const originalOptions =
-      previousViewGenerator != null
-        ? previousViewGenerator(...args)
-        : optionsGenerators.generateViewOptions(...args);
+  optionsGenerators
+    .customGenerateViewOptions = (
+      ...args: any[]
+    ): RendererOptions => {
+      const originalOptions =
+        previousViewGenerator != null
+          ? previousViewGenerator(
+              ...args,
+            )
+          : optionsGenerators
+              .generateViewOptions(
+                ...args,
+              );
 
-    return enhanceViewOptions(originalOptions);
-  };
+      return enhanceViewOptions(
+        originalOptions,
+      );
+    };
 
-  sectionIncludeActivated = true;
+  viewPluginActivated = true;
 };
 
 const deactivate = (): void => {
   /*
-   * ツールバーに追加したスタイルや監視処理を解除する。
+   * bodyへ追加したパレットを先に削除する。
    */
+  deactivateEditorColorPalette();
   deactivateEditorToolbarTop();
 
   if (
     typeof growiFacade === 'undefined'
     || growiFacade.markdownRenderer == null
   ) {
-    sectionIncludeActivated = false;
+    viewPluginActivated = false;
     return;
   }
 
   growiFacade
     .markdownRenderer
     .optionsGenerators
-    .customGenerateViewOptions = previousViewGenerator;
+    .customGenerateViewOptions =
+      previousViewGenerator;
 
   previousViewGenerator = undefined;
-  sectionIncludeActivated = false;
+  viewPluginActivated = false;
 };
 
-if ((window as any).pluginActivators == null) {
+if (
+  (window as any).pluginActivators
+  == null
+) {
   (window as any).pluginActivators = {};
 }
 
-(window as any).pluginActivators[PLUGIN_NAME] = {
+(
+  window as any
+).pluginActivators[PLUGIN_NAME] = {
   activate,
   deactivate,
 };
