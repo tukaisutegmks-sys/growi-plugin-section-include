@@ -48,6 +48,39 @@ const getColorName = (
     : null;
 };
 
+/*
+ * 旧記法がリンク文字列として
+ * :color[重要]
+ * の形で残った場合、重要だけを取り出す。
+ */
+const unwrapLegacyColorLabel = (
+  children: React.ReactNode,
+): React.ReactNode => {
+  let text: string | null = null;
+
+  if (typeof children === 'string') {
+    text = children;
+  }
+  else if (
+    Array.isArray(children)
+    && children.every(
+      child => typeof child === 'string',
+    )
+  ) {
+    text = children.join('');
+  }
+
+  if (text == null) {
+    return children;
+  }
+
+  const matched = text.match(
+    /^:color\[(.*)\]$/s,
+  );
+
+  return matched?.[1] ?? children;
+};
+
 export const withTextColor = (
   Anchor: React.ComponentType<any>,
 ): React.ComponentType<any> => {
@@ -75,7 +108,9 @@ export const withTextColor = (
               colorName
             }
           >
-            {children}
+            {unwrapLegacyColorLabel(
+              children,
+            )}
           </span>
         );
       }
