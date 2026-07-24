@@ -8,16 +8,26 @@ const COLOR_NAMES = [
   'gray',
 ] as const;
 
-type ColorName = typeof COLOR_NAMES[number];
+type ColorName =
+  typeof COLOR_NAMES[number];
 
 type MarkdownNode = {
   type?: string;
   name?: string;
-  url?: string;
+
   attributes?: Record<
     string,
     string | null | undefined
   >;
+
+  data?: {
+    hName?: string;
+    hProperties?: Record<
+      string,
+      unknown
+    >;
+  };
+
   children?: MarkdownNode[];
 };
 
@@ -30,16 +40,16 @@ const isColorName = (
 };
 
 /*
- * :color[文字]{name="red"}
+ * :color[重要]{name="yellow"}
  *
- * を内部的に、
+ * ↓
  *
- * [文字](growi-color:red)
+ * <a href="#growi-color-yellow">
+ *   重要
+ * </a>
  *
- * と同等のリンクノードへ変換する。
- *
- * 通常のa要素としてMarkdownレンダラーを通すことで、
- * HTMLサニタイズによって色指定が消されるのを避ける。
+ * このa要素はwithTextColor側で
+ * 色付きspanへ変換される。
  */
 export const colorDirectivePlugin = () => {
   return (tree: MarkdownNode): void => {
@@ -57,12 +67,17 @@ export const colorDirectivePlugin = () => {
           ?? '';
 
         if (isColorName(requestedColor)) {
-          node.type = 'link';
-          node.url =
-            `growi-color:${requestedColor}`;
+          const data =
+            node.data
+            ?? (node.data = {});
 
-          delete node.name;
-          delete node.attributes;
+          data.hName = 'a';
+
+          data.hProperties = {
+            ...(data.hProperties ?? {}),
+            href:
+              `#growi-color-${requestedColor}`,
+          };
         }
       }
 
