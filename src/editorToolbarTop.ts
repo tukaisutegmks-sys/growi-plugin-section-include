@@ -32,20 +32,25 @@ const isVisible = (
 };
 
 const findEditor = (): HTMLElement | null => {
-  return [...document.querySelectorAll('.cm-editor')]
-    .find((element) => {
-      return isVisible(element)
-        && element.querySelector(
-          '.cm-content[contenteditable="true"][data-language="markdown"]',
-        ) != null;
-    }) ?? null;
+  const editors = [
+    ...document.querySelectorAll<HTMLElement>(
+      '.cm-editor',
+    ),
+  ];
+
+  return editors.find((element) => {
+    return isVisible(element)
+      && element.querySelector(
+        '.cm-content[contenteditable="true"][data-language="markdown"]',
+      ) != null;
+  }) ?? null;
 };
 
 const containsAddButton = (
   element: HTMLElement,
 ): boolean => {
   return [
-    ...element.querySelectorAll(
+    ...element.querySelectorAll<HTMLElement>(
       'button .material-symbols-outlined',
     ),
   ].some((icon) => {
@@ -56,11 +61,15 @@ const containsAddButton = (
 const findToolbar = (
   editor: HTMLElement,
 ): HTMLElement | null => {
-  const templateButton = [
-    ...document.querySelectorAll(
+  const templateButtons = [
+    ...document.querySelectorAll<HTMLButtonElement>(
       'button[data-testid="open-template-button"]',
     ),
-  ].find(isVisible);
+  ];
+
+  const templateButton = templateButtons.find(
+    (button) => isVisible(button),
+  );
 
   if (templateButton == null) {
     return null;
@@ -78,7 +87,7 @@ const findToolbar = (
    * Aaなどの内側だけでなく、
    * ＋ボタンを含むツールバー外枠まで探す。
    */
-  let candidate = innerToolbar;
+  let candidate: HTMLElement = innerToolbar;
   let current = innerToolbar.parentElement;
 
   for (
@@ -198,66 +207,106 @@ const applyToolbarPosition = (
   rememberStyle(state, toolbar);
 
   /*
-   * DOMを移動せず、ツールバーを編集欄上端に表示。
+   * DOMを移動せず、ツールバーを編集欄上端に表示する。
    * Reactによって下へ戻される問題を避ける。
    */
   setImportant(toolbar, 'position', 'fixed');
+
   setImportant(
     toolbar,
     'top',
-    `${Math.max(0, Math.round(editorRect.top))}px`,
+    `${Math.max(
+      0,
+      Math.round(editorRect.top),
+    )}px`,
   );
+
   setImportant(
     toolbar,
     'left',
     `${Math.round(editorRect.left)}px`,
   );
+
   setImportant(toolbar, 'right', 'auto');
   setImportant(toolbar, 'bottom', 'auto');
+
   setImportant(
     toolbar,
     'width',
     `${Math.round(editorRect.width)}px`,
   );
+
   setImportant(
     toolbar,
     'min-height',
     `${toolbarHeight}px`,
   );
+
   setImportant(
     toolbar,
     'display',
     editorIsVisible ? 'flex' : 'none',
   );
-  setImportant(toolbar, 'align-items', 'center');
+
+  setImportant(
+    toolbar,
+    'align-items',
+    'center',
+  );
+
   setImportant(
     toolbar,
     'justify-content',
     'flex-start',
   );
-  setImportant(toolbar, 'overflow-x', 'auto');
-  setImportant(toolbar, 'overflow-y', 'hidden');
-  setImportant(toolbar, 'box-sizing', 'border-box');
+
+  setImportant(
+    toolbar,
+    'overflow-x',
+    'auto',
+  );
+
+  setImportant(
+    toolbar,
+    'overflow-y',
+    'hidden',
+  );
+
+  setImportant(
+    toolbar,
+    'box-sizing',
+    'border-box',
+  );
+
   setImportant(toolbar, 'margin', '0');
   setImportant(toolbar, 'padding', '2px 8px');
   setImportant(toolbar, 'z-index', '1100');
+
   setImportant(
     toolbar,
     'background',
     'var(--bs-body-bg, #172331)',
   );
+
   setImportant(toolbar, 'border-top', 'none');
+
   setImportant(
     toolbar,
     'border-bottom',
     '1px solid var(--bs-border-color, #495057)',
   );
+
   setImportant(toolbar, 'transform', 'none');
 
   /*
    * 1行目がツールバーの裏へ隠れないようにする。
    */
-  setImportant(editor, 'box-sizing', 'border-box');
+  setImportant(
+    editor,
+    'box-sizing',
+    'border-box',
+  );
+
   setImportant(
     editor,
     'padding-top',
@@ -294,7 +343,10 @@ export const activateEditorToolbarTop = (): void => {
     active: true,
     timerId: 0,
     observer: null,
-    originalStyles: new Map(),
+    originalStyles: new Map<
+      HTMLElement,
+      OriginalStyle
+    >(),
     onViewportChange: () => {},
   };
 
