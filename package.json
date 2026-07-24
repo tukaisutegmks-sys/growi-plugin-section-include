@@ -1,6 +1,6 @@
 {
   "name": "growi-plugin-section-include",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Include only a named Markdown section from another GROWI page.",
   "license": "MIT",
   "type": "module",
