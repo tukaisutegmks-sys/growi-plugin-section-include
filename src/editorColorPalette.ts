@@ -166,7 +166,7 @@ const captureCurrentSelection = (
   }
 };
 
-const escapeDirectiveText = (
+const escapeMarkdownLinkText = (
   text: string,
 ): string => {
   return text
@@ -178,29 +178,33 @@ const buildColorMarkup = (
   selectedText: string,
   colorName: ColorName,
 ): string => {
-  if (selectedText.length === 0) {
-    return (
-      `:color[文字]`
-      + `{name="${colorName}"}`
-    );
-  }
+  const targetText =
+    selectedText.length === 0
+      ? '文字'
+      : selectedText;
 
   /*
-   * 複数行を選択した場合は、
-   * 1行ずつ色ディレクティブで囲む。
+   * 独自ディレクティブではなく、
+   * 通常のMarkdownリンクとして挿入する。
+   *
+   * View側ではwithTextColorが
+   * 色付きspanへ変換するため、
+   * リンクとしては表示されない。
    */
-  return selectedText
+  return targetText
     .split('\n')
     .map((line) => {
       if (line.length === 0) {
         return '';
       }
 
-      return (
-        `:color[`
-        + `${escapeDirectiveText(line)}`
-        + `]{name="${colorName}"}`
-      );
+      return [
+        '[',
+        escapeMarkdownLinkText(line),
+        '](',
+        `#growi-color-${colorName}`,
+        ')',
+      ].join('');
     })
     .join('\n');
 };
