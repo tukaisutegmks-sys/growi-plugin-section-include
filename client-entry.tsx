@@ -3,6 +3,10 @@ import remarkDirective from 'remark-directive';
 
 import './src/styles/section-include.css';
 
+import {
+  activateEditorToolbarTop,
+  deactivateEditorToolbarTop,
+} from './src/editorToolbarTop';
 import { sectionDirectivePlugin } from './src/sectionDirective';
 import { withSectionInclude } from './src/SectionInclude';
 
@@ -25,6 +29,7 @@ declare const growiFacade: {
 };
 
 let previousViewGenerator: OptionsGenerator | undefined;
+let sectionIncludeActivated = false;
 
 const enhanceViewOptions = (
   options: RendererOptions,
@@ -71,6 +76,18 @@ const enhanceViewOptions = (
 };
 
 const activate = (): void => {
+  /*
+   * 編集ツールバーを上部へ表示する処理を有効化。
+   */
+  activateEditorToolbarTop();
+
+  /*
+   * 二重登録を防止する。
+   */
+  if (sectionIncludeActivated) {
+    return;
+  }
+
   if (
     typeof growiFacade === 'undefined'
     || growiFacade.markdownRenderer == null
@@ -83,7 +100,7 @@ const activate = (): void => {
 
   /*
    * View画面だけ拡張する。
-   * Preview/Edit側には一切登録しない。
+   * Preview/Edit側には登録しない。
    */
   previousViewGenerator =
     optionsGenerators.customGenerateViewOptions;
@@ -98,13 +115,21 @@ const activate = (): void => {
 
     return enhanceViewOptions(originalOptions);
   };
+
+  sectionIncludeActivated = true;
 };
 
 const deactivate = (): void => {
+  /*
+   * ツールバーに追加したスタイルや監視処理を解除する。
+   */
+  deactivateEditorToolbarTop();
+
   if (
     typeof growiFacade === 'undefined'
     || growiFacade.markdownRenderer == null
   ) {
+    sectionIncludeActivated = false;
     return;
   }
 
@@ -112,6 +137,9 @@ const deactivate = (): void => {
     .markdownRenderer
     .optionsGenerators
     .customGenerateViewOptions = previousViewGenerator;
+
+  previousViewGenerator = undefined;
+  sectionIncludeActivated = false;
 };
 
 if ((window as any).pluginActivators == null) {
