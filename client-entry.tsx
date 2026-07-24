@@ -1,6 +1,7 @@
-import './src/styles/section-include.css';
-
+import type React from 'react';
 import remarkDirective from 'remark-directive';
+
+import './src/styles/section-include.css';
 
 import { sectionDirectivePlugin } from './src/sectionDirective';
 import { withSectionInclude } from './src/SectionInclude';
@@ -19,42 +20,54 @@ declare const growiFacade: {
     optionsGenerators: {
       generateViewOptions: OptionsGenerator;
       customGenerateViewOptions?: OptionsGenerator;
-      generatePreviewOptions?: OptionsGenerator;
-      customGeneratePreviewOptions?: OptionsGenerator;
     };
   };
 };
 
 let previousViewGenerator: OptionsGenerator | undefined;
-let previousPreviewGenerator: OptionsGenerator | undefined;
 
-const enhanceOptions = (options: RendererOptions): RendererOptions => {
+const enhanceViewOptions = (
+  options: RendererOptions,
+): RendererOptions => {
+  const remarkPlugins = [
+    ...(options.remarkPlugins ?? []),
+  ];
+
   /*
-   * 先に ::section[...] 構文をleafDirectiveとして解析する。
+   * ::section[...] をMarkdownディレクティブとして解析する。
    */
-  if (!options.remarkPlugins.includes(remarkDirective)) {
-    options.remarkPlugins.push(remarkDirective as never);
+  if (!remarkPlugins.includes(remarkDirective)) {
+    remarkPlugins.push(remarkDirective);
   }
 
   /*
-   * 解析されたsectionディレクティブを参照表示用ノードへ変換する。
+   * sectionディレクティブを専用のリンクノードへ変換する。
    */
-  if (!options.remarkPlugins.includes(sectionDirectivePlugin)) {
-    options.remarkPlugins.push(sectionDirectivePlugin as never);
+  if (!remarkPlugins.includes(sectionDirectivePlugin)) {
+    remarkPlugins.push(sectionDirectivePlugin);
   }
 
-  const Anchor = options.components.a;
+  const components = {
+    ...options.components,
+  };
+
+  const Anchor = components.a;
 
   if (
     Anchor != null
     && (Anchor as any).__sectionIncludeWrapped !== true
   ) {
     const WrappedAnchor = withSectionInclude(Anchor);
+
     (WrappedAnchor as any).__sectionIncludeWrapped = true;
-    options.components.a = WrappedAnchor;
+    components.a = WrappedAnchor;
   }
 
-  return options;
+  return {
+    ...options,
+    remarkPlugins,
+    components,
+  };
 };
 
 const activate = (): void => {
@@ -65,30 +78,26 @@ const activate = (): void => {
     return;
   }
 
-  const { optionsGenerators } = growiFacade.markdownRenderer;
+  const { optionsGenerators } =
+    growiFacade.markdownRenderer;
 
-  previousViewGenerator = optionsGenerators.customGenerateViewOptions;
+  /*
+   * View画面だけ拡張する。
+   * Preview/Edit側には一切登録しない。
+   */
+  previousViewGenerator =
+    optionsGenerators.customGenerateViewOptions;
 
-  optionsGenerators.customGenerateViewOptions = (...args: any[]) => {
-    const options = previousViewGenerator != null
-      ? previousViewGenerator(...args)
-      : optionsGenerators.generateViewOptions(...args);
+  optionsGenerators.customGenerateViewOptions = (
+    ...args: any[]
+  ): RendererOptions => {
+    const originalOptions =
+      previousViewGenerator != null
+        ? previousViewGenerator(...args)
+        : optionsGenerators.generateViewOptions(...args);
 
-    return enhanceOptions(options);
+    return enhanceViewOptions(originalOptions);
   };
-
-  if (optionsGenerators.generatePreviewOptions != null) {
-    previousPreviewGenerator =
-      optionsGenerators.customGeneratePreviewOptions;
-
-    optionsGenerators.customGeneratePreviewOptions = (...args: any[]) => {
-      const options = previousPreviewGenerator != null
-        ? previousPreviewGenerator(...args)
-        : optionsGenerators.generatePreviewOptions!(...args);
-
-      return enhanceOptions(options);
-    };
-  }
 };
 
 const deactivate = (): void => {
@@ -99,11 +108,10 @@ const deactivate = (): void => {
     return;
   }
 
-  const { optionsGenerators } = growiFacade.markdownRenderer;
-
-  optionsGenerators.customGenerateViewOptions = previousViewGenerator;
-  optionsGenerators.customGeneratePreviewOptions =
-    previousPreviewGenerator;
+  growiFacade
+    .markdownRenderer
+    .optionsGenerators
+    .customGenerateViewOptions = previousViewGenerator;
 };
 
 if ((window as any).pluginActivators == null) {
