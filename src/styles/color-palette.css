@@ -1,0 +1,161 @@
+/*
+ * Markdown本文の文字色
+ */
+
+.growi-text-color {
+  font-weight: inherit;
+}
+
+.growi-text-color-red {
+  color: #f03e3e !important;
+}
+
+.growi-text-color-orange {
+  color: #f76707 !important;
+}
+
+.growi-text-color-yellow {
+  color: #f0b429 !important;
+}
+
+.growi-text-color-green {
+  color: #37b24d !important;
+}
+
+.growi-text-color-blue {
+  color: #339af0 !important;
+}
+
+.growi-text-color-purple {
+  color: #9775fa !important;
+}
+
+.growi-text-color-gray {
+  color: #adb5bd !important;
+}
+
+
+/*
+ * 上部ツールバーのパレットボタン
+ */
+
+.growi-color-palette-button {
+  position: fixed;
+  z-index: 1201;
+
+  display: none;
+  align-items: center;
+  justify-content: center;
+
+  width: 34px;
+  height: 34px;
+  padding: 0;
+
+  color: var(--bs-body-color, #dee2e6);
+  background:
+    var(--bs-body-bg, #172331);
+
+  border:
+    1px solid
+    var(--bs-border-color, #495057);
+
+  border-radius: 6px;
+
+  cursor: pointer;
+}
+
+.growi-color-palette-button:hover {
+  background:
+    var(--bs-secondary-bg, #2b3948);
+}
+
+.growi-color-palette-button
+.material-symbols-outlined {
+  font-size: 21px;
+  line-height: 1;
+}
+
+
+/*
+ * 色選択パネル
+ */
+
+.growi-color-palette-panel {
+  position: fixed;
+  z-index: 1202;
+
+  display: none;
+  align-items: center;
+  gap: 7px;
+
+  padding: 9px;
+
+  background:
+    var(--bs-body-bg, #172331);
+
+  border:
+    1px solid
+    var(--bs-border-color, #495057);
+
+  border-radius: 8px;
+
+  box-shadow:
+    0 6px 20px
+    rgb(0 0 0 / 30%);
+}
+
+.growi-color-palette-panel.is-open {
+  display: flex;
+}
+
+.growi-color-palette-swatch {
+  width: 27px;
+  height: 27px;
+  padding: 0;
+
+  border: 2px solid
+    rgb(255 255 255 / 45%);
+
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.growi-color-palette-swatch:hover {
+  transform: scale(1.14);
+}
+
+.growi-color-palette-swatch:focus-visible {
+  outline:
+    2px solid
+    var(--bs-primary, #0d6efd);
+
+  outline-offset: 2px;
+}
+
+.growi-color-palette-red {
+  background: #f03e3e;
+}
+
+.growi-color-palette-orange {
+  background: #f76707;
+}
+
+.growi-color-palette-yellow {
+  background: #f0b429;
+}
+
+.growi-color-palette-green {
+  background: #37b24d;
+}
+
+.growi-color-palette-blue {
+  background: #339af0;
+}
+
+.growi-color-palette-purple {
+  background: #9775fa;
+}
+
+.growi-color-palette-gray {
+  background: #adb5bd;
+}
