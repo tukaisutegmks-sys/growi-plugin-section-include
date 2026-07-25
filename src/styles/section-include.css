@@ -17,3 +17,37 @@
 .growi-section-include > :last-child {
   margin-bottom: 0;
 }
+/*
+ * Markdownテーブルの表示補正
+ */
+.grw-page-content table,
+.markdown-body table,
+.wiki table,
+[class*="markdown"] table {
+  width: auto;
+  margin: 1rem 0;
+  border-collapse: collapse !important;
+  border-spacing: 0 !important;
+}
+
+.grw-page-content table th,
+.grw-page-content table td,
+.markdown-body table th,
+.markdown-body table td,
+.wiki table th,
+.wiki table td,
+[class*="markdown"] table th,
+[class*="markdown"] table td {
+  padding: 8px 12px !important;
+  border: 1px solid var(--bs-border-color, #495057) !important;
+  text-align: left;
+  vertical-align: top;
+}
+
+.grw-page-content table th,
+.markdown-body table th,
+.wiki table th,
+[class*="markdown"] table th {
+  font-weight: 700;
+  background-color: rgb(255 255 255 / 6%);
+}
